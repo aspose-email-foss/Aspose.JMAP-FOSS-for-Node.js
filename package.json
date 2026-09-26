@@ -1,0 +1,32 @@
+{
+  "name": "aspose-jmap-foss",
+  "version": "0.1.0",
+  "description": "Open-source JMAP (RFC 8620 Core / RFC 8621 Mail + EmailSubmission) client library with an Aspose.Email-style API.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "author": "Aspose <jmap@aspose.com>",
+  "homepage": "https://github.com/aspose-email-foss/Aspose.JMAP-FOSS-for-Node.js#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aspose-email-foss/Aspose.JMAP-FOSS-for-Node.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aspose-email-foss/Aspose.JMAP-FOSS-for-Node.js/issues"
+  },
+  "keywords": ["jmap", "rfc8620", "rfc8621", "email", "mail", "client"],
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/"
+  }
+}

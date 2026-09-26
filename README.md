@@ -1,0 +1,205 @@
+# Aspose.JMAP FOSS for Node.js
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![npm version](https://img.shields.io/npm/v/aspose-jmap-foss.svg)](https://www.npmjs.com/package/aspose-jmap-foss) [![Contributors](https://img.shields.io/github/contributors/aspose-email-foss/Aspose.JMAP-FOSS-for-Node.js.svg)](https://github.com/aspose-email-foss/Aspose.JMAP-FOSS-for-Node.js/graphs/contributors)
+
+[![Aspose.JMAP FOSS for Node.js](https://products.aspose.org/media/jmap/nodejs/banner-readme.png)](https://products.aspose.org/jmap/nodejs/)
+
+Aspose.JMAP FOSS for Node.js is a free, open source JMAP client library for Node.js — an
+ES-module toolkit for talking to a [JMAP](https://jmap.io) mail server over HTTP:
+[RFC 8620](https://www.rfc-editor.org/rfc/rfc8620) Core (session, `Core/echo`, blob
+upload/download, batched method calls) and [RFC 8621](https://www.rfc-editor.org/rfc/rfc8621)
+Mail (Mailbox/Email/Thread/Identity/SearchSnippet) plus EmailSubmission. Its public API is
+styled after Aspose.Email's client conventions — a client object plus an options object,
+`connect()`/`close()` lifecycle, and strongly-typed message and folder models — and it ships
+with no runtime dependencies (it uses the built-in `fetch`).
+
+**This is an official Aspose open-source project. It does not contain or reference Aspose.Email
+proprietary source.** The library is generated from hand-authored JMAP protocol specifications.
+
+## Navigation
+
+- [At a Glance](#at-a-glance)
+- [Key Capabilities](#key-capabilities)
+- [Installation](#installation)
+- [Dependencies](#dependencies)
+- [Quick Start](#quick-start)
+- [Additional Examples](#additional-examples)
+- [API Reference](#api-reference)
+- [Documentation & Resources](#documentation--resources)
+- [Scope and Limitations](#scope-and-limitations)
+- [Development and Testing](#development-and-testing)
+- [License](#license)
+
+## At a Glance
+
+```mermaid
+flowchart TD
+  subgraph StartingPoints["Starting Points"]
+    direction TB
+    i1["A JMAP session URL (.well-known/jmap)"]
+    i2["Credentials: username/password or an OAuth 2.0 bearer token"]
+  end
+  PRODUCT["Aspose.JMAP FOSS for Node.js (JmapClient)"]
+  subgraph Capabilities["Core Capabilities"]
+    direction TB
+    c1["Connect and read the JMAP Session (accounts, capabilities)"]
+    c2["Mailbox CRUD, Email query/get/set, Thread and Identity reads"]
+    c3["EmailSubmission: send, cancel, list"]
+    c4["Blob upload/download; batched calls with ResultReference"]
+  end
+  subgraph Outputs["Outputs"]
+    direction TB
+    o1["Strongly-typed models (Mailbox, Email, Thread, ...)"]
+    o2["Raw JMAP Request/Response for advanced use"]
+  end
+  StartingPoints --> PRODUCT --> Capabilities --> Outputs
+```
+
+## Key Capabilities
+
+- **Connect and inspect the session** — `client.connect()` fetches `/.well-known/jmap` and
+  exposes the session (account ids, `capabilities`, `apiUrl`, `uploadUrl`, `downloadUrl`).
+- **Mailboxes** — `listMailboxes()`, `getMailbox()`, `createMailbox()`, `deleteMailbox()` wrap
+  `Mailbox/get`, `Mailbox/query`, and `Mailbox/set`.
+- **Messages** — `listMessages()`, `fetchMessage()`, `moveMessage()`, `setMessageKeyword()`,
+  `deleteMessage()` over `Email/query`, `Email/get`, and `Email/set`.
+- **Identities** — `listIdentities()` over `Identity/get`.
+- **Sending** — `send()`, `cancelSend()`, `listSubmissions()` wrap `EmailSubmission/set` and
+  `EmailSubmission/get`.
+- **Blobs** — `uploadBlob()` / `downloadBlob()` for `/upload` and `/download`.
+- **Batching** — `sendRequest()` sends any list of `Invocation`s in one HTTP round trip, with
+  `ResultReference` ([RFC 8620 §3.7](https://www.rfc-editor.org/rfc/rfc8620#section-3.7)) to
+  chain one call's result into the next.
+- **Pluggable transport** — a stub `fetchImpl` can be injected, so no unit test needs a network.
+- **OAuth 2.0** — a `bearerToken` option ([RFC 6750](https://www.rfc-editor.org/rfc/rfc6750)) as
+  an alternative to HTTP Basic.
+
+## Installation
+
+No package has been published to npm yet; until it is, build the library from source (see
+[Development and Testing](#development-and-testing)). The intended published id is
+`aspose-jmap-foss`:
+
+```bash
+npm install aspose-jmap-foss
+```
+
+The package is an ES module (`"type": "module"`) and targets Node.js 18 or later (for the
+built-in `fetch`).
+
+## Dependencies
+
+### Required Package Dependencies
+
+None. The client uses the global `fetch` from Node.js 18+; there are no `dependencies` in
+`package.json`.
+
+### Native and System Requirements
+
+- Node.js 18.0.0 or later.
+
+### Development Dependencies
+
+- The test suite runs on the built-in `node --test` runner — no test framework to install.
+
+## Quick Start
+
+```javascript
+import { JmapClient } from "aspose-jmap-foss";
+
+const client = new JmapClient({
+  sessionUrl: "https://jmap.example.test/.well-known/jmap",
+  username: "user@example.test",
+  password: "secret",
+});
+await client.connect();
+const mailboxes = await client.listMailboxes();
+await client.close();
+```
+
+## Additional Examples
+
+### OAuth 2.0 bearer token authentication
+
+Authenticate with an OAuth 2.0 bearer token
+([RFC 6750](https://www.rfc-editor.org/rfc/rfc6750)) instead of username/password; when set, it
+takes precedence and the client sends `Authorization: Bearer <token>`:
+
+```javascript
+const client = new JmapClient({
+  sessionUrl: "https://jmap.example.test/.well-known/jmap",
+  bearerToken: "your-oauth-access-token",
+});
+```
+
+<details>
+<summary>Batching requests with ResultReference</summary>
+
+Multiple method calls can be batched into a single HTTP round trip via `sendRequest()`, using a
+`ResultReference` ([RFC 8620 §3.7](https://www.rfc-editor.org/rfc/rfc8620#section-3.7)) to chain
+a later call to an earlier one's result without a second request:
+
+```javascript
+import { Invocation, ResultReference } from "aspose-jmap-foss";
+
+const query = new Invocation("Email/query", { accountId }, "c1");
+const get = new Invocation(
+  "Email/get",
+  { accountId, "#ids": new ResultReference("c1", "Email/query", "/ids").toJson() },
+  "c2",
+);
+const resp = await client.sendRequest([query, get], ["urn:ietf:params:jmap:mail"]);
+```
+
+</details>
+
+## API Reference
+
+`JmapClient` is the single entry point; the model classes `Session`, `Mailbox`, `Email`,
+`EmailAddress`, `Thread`, `Identity`, `EmailSubmission`, and `SearchSnippet` mirror the JMAP
+objects one-to-one, and `Invocation` / `ResultReference` model raw method calls for
+`sendRequest()`. Errors surface as `JmapNetworkError` (transport) and `JmapProtocolError` (a
+JMAP method-level error); per-item `Set` failures are returned as data on the result object
+rather than thrown.
+
+The full protocol/API reference, rendered from the same specs that drive generation, is
+[`docs/api-reference.md`](../../docs/api-reference.md) at the repository root.
+
+## Documentation & Resources
+
+- **[Getting started guide](https://docs.aspose.org/jmap/nodejs/)** — installation and walkthroughs.
+- **[API reference](https://reference.aspose.org/jmap/nodejs/)** — browsable reference for the public types.
+- **[How-to guides & FAQ](https://kb.aspose.org/jmap/nodejs/)** — task-focused answers.
+- **[Protocol/API reference](../../docs/api-reference.md)** — the in-repo reference rendered from the specs.
+- **[Changelog](../../CHANGELOG.md)**, **[Contributing guide](../../CONTRIBUTING.md)**, **[Security policy](../../SECURITY.md)**.
+- Found a bug or have a feature request? [Open an issue](https://github.com/aspose-email-foss/Aspose.JMAP-FOSS-for-Node.js/issues) on GitHub.
+
+## Scope and Limitations
+
+- **Protocol**: JMAP Core (RFC 8620) and JMAP Mail (RFC 8621: Mailbox/Email/Thread/Identity/SearchSnippet)
+  plus EmailSubmission.
+- **Out of scope for v1**:
+  - Push / `EventSource` streaming — the type exists but is a stub/no-op.
+  - JMAP for Calendars and Contacts.
+  - `Date`/`UTCDate` values are kept as raw RFC 3339 strings (no `Date` parsing) to avoid
+    timezone-conversion bugs.
+- Unit tests run against a stub `fetchImpl` with mocked responses — no live JMAP server is
+  required. A Docker-based live-server integration suite (Stalwart Mail Server) lives in
+  [`infra/integration/`](../../infra/integration/README.md).
+
+## Development and Testing
+
+```bash
+git clone https://github.com/aspose-email-foss/Aspose.JMAP-FOSS-for-Node.js.git
+cd Aspose.JMAP-FOSS-for-Node.js
+npm install
+npm test
+```
+
+See [`infra/integration/README.md`](../../infra/integration/README.md) for the live-server suite.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). The MIT License permits use, copying,
+modification, distribution, sublicensing, and commercial use, provided its copyright and
+permission notice are retained. The software is provided without warranty.
